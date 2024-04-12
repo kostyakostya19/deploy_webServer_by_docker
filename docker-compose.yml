@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  web_server:
+    image: vishnevayakostochka/web_server:1.0.0
+    container_name: web_server_container
+    restart: always
+    networks:
+      - web_project
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nginx_proxy:
+    image: vishnevayakostochka/nginx_proxy:1.0.0
+    container_name: nginx_proxy_container
+    ports:
+      - "80:80"
+    restart: always
+    depends_on:
+      - web_server
+    networks:
+      - web_project
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql:
+    image: vishnevayakostochka/mysql:1.0.0
+    container_name: mysql_container
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - mysqldata:/var/lib/mysql
+    restart: always
+    networks:
+      - web_project
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+networks:
+  web_project:
+    driver: bridge
+
+volumes:
+  mysqldata:
